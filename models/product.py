@@ -16,11 +16,15 @@ class Product:
         self.datetime_from = datetime_from
         self.datetime_to = datetime_to
 
-    def getRatesRange(self):
-        return mt5.copy_rates_range(self.currency_pair_name, self.timeframe, self.datetime_from, self.datetime_to)
+    def get_rates_range(self):
+        rates = mt5.copy_rates_range(self.currency_pair_name, self.timeframe, self.datetime_from, self.datetime_to)
+        if rates != None:
+            return rates
+        else:
+            raise RuntimeError('copy_rates_range() failed. error code =', mt5.last_error())
 
-    def setRatesDataFrame(self):
-        self.rates = pd.DataFrame(self.getRatesRange())
+    def set_rates_dataframe(self):
+        self.rates = pd.DataFrame(self.get_rates_range())
 
     # TODO 単一通貨ペアの情報取得処理を書き、MT5クラスから通貨ペアごとに呼び出す
 

@@ -7,8 +7,8 @@ class Technical:
         if sma_periods != None:
             self.sma_periods = sma_periods
 
+    # SMAデータを生成する
     # product: SMAデータを生成する対象の通貨ペアのインスタンス
-    # period: SMAの期間
     def generate_close_sma(self, product):
         df_sma = pd.DataFrame()
 
