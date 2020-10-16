@@ -7,7 +7,6 @@ class sma:
         self.period = period
 
     # series: SMAの算出元となる値の配列
-    def generateSmaColumnSeries(self, series):
-
+    def generateSmaData(self, series):
         return series.rolling(self.period).mean()
         
