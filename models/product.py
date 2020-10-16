@@ -2,7 +2,7 @@ from datetime import datetime
 import MetaTrader5 as mt5
 import pandas as pd
 
-class product:
+class Product:
     currency_pair_name = ''
     timeframe = None
     datetime_from: datetime|None = None

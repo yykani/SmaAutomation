@@ -1,4 +1,4 @@
-class sma:
+class Sma:
     period = None
 
     def __init__(self, period):

@@ -1,10 +1,15 @@
 # Import common modules
+import os
 from datetime import datetime
 import pandas as pd
 import MetaTrader5 as mt5
 # import matplotlib.pyplot as plt
 # from pandas.plotting import register_matplotlib_converters
 # register_matplotlib_converters()
+
+# Instantiate back_test to set test_periods
+from models.back_test import BackTest 
+back_test = BackTest([25, 50, 75, 100, 200])
 
 # Connect to MetaTrader5
 if not mt5.initialize():
@@ -17,11 +22,11 @@ timezone = pytz.timezone("Etc/UTC")
 utc_from = datetime(2020, 1, 10, tzinfo=timezone)
 utc_to = datetime(2020, 1, 11, hour = 13, tzinfo=timezone)
 
-# Instantiate product models
-from models.product import product
-gbpusd = product('GBPUSD', mt5.TIMEFRAME_M5, utc_from, utc_to)
-eurusd = product('EURUSD', mt5.TIMEFRAME_M5, utc_from, utc_to)
-audusd = product('AUDUSD', mt5.TIMEFRAME_M5, utc_from, utc_to)
+# Instantiate Products
+from models.product import Product
+gbpusd = Product('GBPUSD', mt5.TIMEFRAME_M5, utc_from, utc_to)
+eurusd = Product('EURUSD', mt5.TIMEFRAME_M5, utc_from, utc_to)
+audusd = Product('AUDUSD', mt5.TIMEFRAME_M5, utc_from, utc_to)
 
 # Get DataFrames of rates each currency pairs
 products = [gbpusd, eurusd, audusd]
@@ -32,29 +37,21 @@ for product in products:
 # Disconnect from MetaTrader5
 mt5.shutdown()
 
+# Create a new directory to save csv  
+new_dir_path = 'exports/' + datetime.now().strftime('%Y%m%d_%H%M%S')
+os.mkdir(new_dir_path)
+
 # Create SMA data
-from models.sma import sma
-
-for df in rates_dataframes:
-   sma25Inst = sma(25)
-   df['sma25'] = sma25Inst.generateSmaData(df['close'])
-
-   sma50Inst = sma(50)
-   df['sma50'] = sma50Inst.generateSmaData(df['close'])
-
-   sma75Inst = sma(75)
-   df['sma75'] = sma75Inst.generateSmaData(df['close'])
-
-   sma100Inst = sma(100)
-   df['sma100'] = sma100Inst.generateSmaData(df['close'])
-
-   sma200Inst = sma(200)
-   df['sma200'] = sma200Inst.generateSmaData(df['close'])
+from models.sma import Sma
+for product, df in zip(products, rates_dataframes):
+   for test_period in back_test.test_periods:
+      smaInst = Sma(test_period)
+      df['sma' + test_period] = smaInst.generateSmaData(df['close'])
 
    # 秒での時間をdatetime形式に変換する
    df['time'] = pd.to_datetime(df['time'], unit='s')
 
-   export_path = 'exports/' + datetime.now().strftime('%Y%m%d-%H%M%S') + '.csv'
+   export_path = new_dir_path + '/' + product.currency_pair_name + '.csv'
    df.to_csv(export_path)
 
    print('df.head() >>>>>>>>>')
