@@ -7,9 +7,9 @@ import MetaTrader5 as mt5
 # from pandas.plotting import register_matplotlib_converters
 # register_matplotlib_converters()
 
-# Instantiate back_test to set test_periods
-from models.back_test import BackTest 
-back_test = BackTest([25, 50, 75, 100, 200])
+# # Instantiate back_test
+# from models.back_test import BackTest 
+# back_test = BackTest()
 
 # Connect to MetaTrader5
 if not mt5.initialize():
@@ -30,9 +30,8 @@ audusd = Product('AUDUSD', mt5.TIMEFRAME_M5, utc_from, utc_to)
 
 # Get DataFrames of rates each currency pairs
 products = [gbpusd, eurusd, audusd]
-rates_dataframes = []
 for product in products:
-   rates_dataframes.append(product.getRatesDataFrame())
+   product.setRatesDataFrame()
 
 # Disconnect from MetaTrader5
 mt5.shutdown()
@@ -41,21 +40,21 @@ mt5.shutdown()
 new_dir_path = 'exports/' + datetime.now().strftime('%Y%m%d_%H%M%S')
 os.mkdir(new_dir_path)
 
-# Create SMA data
-from models.sma import Sma
-for product, df in zip(products, rates_dataframes):
-   for test_period in back_test.test_periods:
-      smaInst = Sma(test_period)
-      df['sma' + test_period] = smaInst.generateSmaData(df['close'])
+# Create Technical data
+from models.technical import Technical
+technical = Technical(sma_periods=[25, 50, 75, 100, 200])
+# - SMA
+for product in products:
+   product.rates = pd.concat([product.rates, technical.generate_close_sma(product)], axis=1)
 
-   # 秒での時間をdatetime形式に変換する
-   df['time'] = pd.to_datetime(df['time'], unit='s')
+   # Convert format of DATE column from seconds to datetime
+   product.rates['time'] = pd.to_datetime(product.rates['time'], unit='s')
 
    export_path = new_dir_path + '/' + product.currency_pair_name + '.csv'
-   df.to_csv(export_path)
+   product.rates.to_csv(export_path)
 
-   print('df.head() >>>>>>>>>')
-   print(df.head(300))
+   print('product.rates.head(300) >>>>>>>>>')
+   print(product.rates.head(300))
 
    # # チャートにティックを表示する
    # plt.plot(df['time'], df['close'], 'r-', label='close')
