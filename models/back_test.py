@@ -1,10 +1,31 @@
+import datetime
 import itertools
+from enums.timeframe import TimeFrame
 
 class BackTest:
+    interval_days = None
+    back_days = None
+    test_datetime_from = None
+    test_datetime_to = None
+    next_datetime_from = None
+    next_datetime_to = None
+    results = {}
+
+    def __init__(self, interval_days, back_days, test_datetime_from, test_datetime_to):
+        self.interval_days = interval_days
+        self.back_days = back_days
+        self.test_datetime_from = test_datetime_from
+        self.test_datetime_to = test_datetime_to
+        self.next_datetime_from = test_datetime_from + datetime.timedelta(days=self.back_days)
+        self.next_datetime_to = self.next_datetime_from + datetime.timedelta(days=self.back_days)
+
+    def next_period(self):
+        self.next_datetime_from += datetime.timedelta(days=self.back_days)
+        self.next_datetime_to += datetime.timedelta(days=self.back_days)
 
     def search_best_sma_value(self, periods, product):
         print('---------------------------')
-        print('start - search_best_sma_value')
+        print(f'start - search_best_sma_value - from {self.next_datetime_from} to {self.next_datetime_to} - {product.currency_pair_name} - {TimeFrame.timeframe_names[product.timeframe]}')
 
         profit_and_loss_dict = {}
         
@@ -90,5 +111,10 @@ class BackTest:
             # pipsに変換して整数に変換
             profit_and_loss = int(profit_and_loss * 10000)
             profit_and_loss_dict[combination_str] = profit_and_loss
-        
+
+            print(f'> {profit_and_loss}')
+
+        results_elem_name = f'from {self.next_datetime_from} to {self.next_datetime_to} - {product.currency_pair_name} - {TimeFrame.timeframe_names[product.timeframe]}'
+        self.results[results_elem_name] = profit_and_loss_dict
+
         return profit_and_loss_dict
